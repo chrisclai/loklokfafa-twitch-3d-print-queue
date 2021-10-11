@@ -1,7 +1,7 @@
 # ignore personal files
-updatejson.py
 privinfo.py
 privstuff
+.gitignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
