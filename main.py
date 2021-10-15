@@ -47,37 +47,71 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         c.join(self.channel)
 
     def on_pubmsg(self, c, e):
+        
+        # Put your channel name here
+        channelName = "loklokfafa"
+        
         if e.arguments[0][:13] == '!printrequest':
             subs = getSubsList()
             if e.source.nick in subs:
-                # try:
-                link = e.arguments[0].split(' ')[1]
-                print(f'New Print Request Queued from user {e.source.nick}: {link}')
-                self.add_print(e, link)
-                # except Exception as f:
-                    # print(f"Queue Command Failed. Reason: {f}")
-                    # c.privmsg(self.channel, f"Hello {e.source.nick}, what would you like to 3D print today?")
+                try:
+                    link = e.arguments[0].split(' ')[1]
+                    print(f'New Print Request Queued from user {e.source.nick}: {link}')
+                    self.add_print(e, link)
+                except Exception as f:
+                    print(f"Queue Command Failed. Reason: {f}")
+                    c.privmsg(self.channel, f"Hello {e.source.nick}, what would you like to 3D print today?")
             else:
                 c.privmsg(self.channel, f"Sorry, this command is limited to subscribers only!")
+        if e.arguments[0][:16] == '!completerequest':
+            if e.source.nick == channelName.lower():
+                print(f"Removing current print from top of the queue!")
+                self.remove_print(e)
+            else:
+                c.privmsg(self.channel, "Sorry, this command can only be used by the broadcaster.")
         elif e.arguments[0][:1] == '!':
             cmd = e.arguments[0].split(' ')[0][1:]
             print('Received command: ' + cmd)
             self.do_command(e, cmd)
 
+    def remove_print(self, e):
+        c = self.connection
+        filelocation = 'privstuff/printqueue.json' # Change based on individual version
+        requests = refresh_json(filelocation)
+        
+        try:
+            username = requests['1']['username']
+            requests = remove_element(requests)
+            print(len(requests))
+            if len(requests) == 1:
+                requests['0']['username'] = 'PLACEHOLDER'
+                requests['0']['printlink'] = 'PLACEHOLDER'
+                requests['0']['printname'] = 'PLACEHOLDER'
+                requests['0']['daterequest'] = 'PLACEHOLDER'
+            update_json(requests, filelocation)
+            c.privmsg(self.channel, f"Completed {username}'s request! Thank you for using QueueBot!")
+        except:
+            c.privmsg(self.channel, "There are currently no requests!")
+
     def add_print(self, e, link):
         c = self.connection
         filelocation = 'privstuff/printqueue.json' # Change based on individual version
         requests = refresh_json(filelocation)
-        now = datetime.now
+        now = datetime.now()
 
         # Add new element into dictionary
-        requests[str(len(requests))] = new_element(['username', 'printlink', 'daterequest'])
-        requests[str(len(requests))]['username'] = e.source.nick
-        requests[str(len(requests))]['printlink'] = link
-        requests[str(len(requests))]['daterequest'] = now.strftime('%m/%d/%Y')
+        requests[str(len(requests))] = new_element(['username', 'printlink', 'printname', 'daterequest'])
+        
+        # Refresh dictionary
+        update_json(requests, filelocation)
+        requests = refresh_json(filelocation)
 
-        print(requests)
-        print(e.source.nick)
+        # Fill out dictionary elements
+        requests[str(len(requests) - 1)]['username'] = e.source.nick
+        requests[str(len(requests) - 1)]['printlink'] = link
+        requests[str(len(requests) - 1)]['printname'] = link
+        requests[str(len(requests) - 1)]['daterequest'] = now.strftime('%m/%d/%Y')
+
         # Place data into json file
         update_json(requests, filelocation)
         c.privmsg(self.channel, f"Hello {e.source.nick}, your request has been successfully activated in the queue! Thank you for participating!")
