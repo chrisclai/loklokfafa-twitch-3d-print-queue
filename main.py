@@ -55,12 +55,12 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
             subs = getSubsList()
             if e.source.nick in subs:
                 try:
-                    link = e.arguments[0].split(' ')[1]
+                    name, link = e.arguments[0].split(' ')[1], e.arguments[0].split(' ')[2]
                     print(f'New Print Request Queued from user {e.source.nick}: {link}')
-                    self.add_print(e, link)
+                    self.add_print(e, name, link)
                 except Exception as f:
                     print(f"Queue Command Failed. Reason: {f}")
-                    c.privmsg(self.channel, f"Hello {e.source.nick}, what would you like to 3D print today?")
+                    c.privmsg(self.channel, f"Hello {e.source.nick}, what would you like to 3D print today? (Format: !printrequest <printname> <printlink>")
             else:
                 c.privmsg(self.channel, f"Sorry, this command is limited to subscribers only!")
         if e.arguments[0][:16] == '!completerequest':
@@ -93,7 +93,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         except:
             c.privmsg(self.channel, "There are currently no requests!")
 
-    def add_print(self, e, link):
+    def add_print(self, e, name, link):
         c = self.connection
         filelocation = 'privstuff/printqueue.json' # Change based on individual version
         requests = refresh_json(filelocation)
@@ -109,7 +109,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         # Fill out dictionary elements
         requests[str(len(requests) - 1)]['username'] = e.source.nick
         requests[str(len(requests) - 1)]['printlink'] = link
-        requests[str(len(requests) - 1)]['printname'] = link
+        requests[str(len(requests) - 1)]['printname'] = name
         requests[str(len(requests) - 1)]['daterequest'] = now.strftime('%m/%d/%Y')
 
         # Place data into json file

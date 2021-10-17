@@ -31,7 +31,7 @@ def remove_element(queuedict):
         i = len(queuedict) - 1
         queuedict[str(i - 1)]['username'] = queuedict[str(i)]['username']
         queuedict[str(i - 1)]['printlink'] = queuedict[str(i)]['printlink']
-        queuedict[str(i - 1)]['printaname'] = queuedict[str(i)]['printname']
+        queuedict[str(i - 1)]['printname'] = queuedict[str(i)]['printname']
         queuedict[str(i - 1)]['daterequest'] = queuedict[str(i)]['daterequest']
         queuedict.pop(str(i))
     return queuedict
